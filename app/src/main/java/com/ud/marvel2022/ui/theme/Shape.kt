@@ -1,4 +1,4 @@
-package com.ud.marveldata.ui.theme
+package com.ud.marvel2022.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Shapes

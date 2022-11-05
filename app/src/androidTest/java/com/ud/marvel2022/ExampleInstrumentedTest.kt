@@ -1,4 +1,4 @@
-package com.ud.marveldata
+package com.ud.marvel2022
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.ud.marveldata", appContext.packageName)
+        assertEquals("com.ud.marvel2022", appContext.packageName)
     }
 }

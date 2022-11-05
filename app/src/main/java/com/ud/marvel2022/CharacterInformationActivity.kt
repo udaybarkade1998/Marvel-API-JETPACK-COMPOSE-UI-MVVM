@@ -1,4 +1,4 @@
-package com.ud.marveldata
+package com.ud.marvel2022
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -10,19 +10,28 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.ud.marveldata.ui.theme.MarvelDataTheme
+import com.ud.marvel2022.model.character.ApiResult
+import com.ud.marvel2022.ui.theme.Marvel2022Theme
+import com.ud.marvel2022.view.CharacterUI
 
-class MainActivity : ComponentActivity() {
+class CharacterInformation : ComponentActivity() {
+
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MarvelDataTheme {
+            Marvel2022Theme {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    Greeting("Android")
+                    val character = intent.getParcelableExtra("character") as ApiResult?
+                    if (character != null) {
+                        CharacterUI(character = character)
+                    }
                 }
             }
         }
@@ -30,14 +39,14 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String) {
+fun Greeting2(name: String) {
     Text(text = "Hello $name!")
 }
 
 @Preview(showBackground = true)
 @Composable
-fun DefaultPreview() {
-    MarvelDataTheme {
-        Greeting("Android")
+fun DefaultPreview2() {
+    Marvel2022Theme {
+        Greeting2("Android")
     }
 }

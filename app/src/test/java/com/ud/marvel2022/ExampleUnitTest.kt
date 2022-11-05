@@ -1,4 +1,4 @@
-package com.ud.marveldata
+package com.ud.marvel2022
 
 import org.junit.Test
 

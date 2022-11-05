@@ -1,4 +1,4 @@
-package com.ud.marveldata.ui.theme
+package com.ud.marvel2022.ui.theme
 
 import androidx.compose.material.Typography
 import androidx.compose.ui.text.TextStyle
