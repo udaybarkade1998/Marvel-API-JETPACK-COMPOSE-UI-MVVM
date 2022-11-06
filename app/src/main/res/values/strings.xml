@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Marvel2022</string>
     <string name="title_activity_character_information">CharacterInformation</string>
+    <string name="title_activity_bookmark">BookmarkActivity</string>
 </resources>

@@ -2,6 +2,7 @@ package com.ud.marvel2022
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -13,13 +14,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Observer
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.ud.marvel2022.model.BookmarkData
 import com.ud.marvel2022.model.character.CharacterData
 import com.ud.marvel2022.ui.theme.Marvel2022Theme
 import com.ud.marvel2022.view.CharacterItem
@@ -28,13 +26,13 @@ import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
 
+
     private val characterViewModel by viewModels<CharacterViewModel>()
 
     @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val materialBlue700 = Color(0xFF1976D2)
             val scaffoldState = rememberScaffoldState(rememberDrawerState(DrawerValue.Open))
             Scaffold(
                 scaffoldState = scaffoldState,
@@ -46,12 +44,7 @@ class MainActivity : ComponentActivity() {
 
 
                 },
-                floatingActionButtonPosition = FabPosition.End,
-                floatingActionButton = {
-                    FloatingActionButton(onClick = {}) {
-                        Text("Search")
-                    }
-                },
+
                 content = {
                     var refreshing by remember { mutableStateOf(false) }
                     LaunchedEffect(refreshing) {
@@ -75,23 +68,28 @@ class MainActivity : ComponentActivity() {
                                 color = Color.Black
                             ) {
 
-                                val characterList = characterViewModel.characterListResponse
                                 characterViewModel.setInit(LocalContext.current.applicationContext)
-                                characterViewModel.readAllData.observe(this,
-                                    Observer {
-                                        if (characterViewModel.readAllData.value?.isEmpty() == true)
-                                            characterViewModel.getCharacterList()
-                                        else {
-                                            characterViewModel.getRoomData()
 
-                                            if (!characterViewModel.observeNetworkCall.value!!) {
-                                                characterViewModel.getCharacterList()
-                                                characterViewModel.observeNetworkCall.value = true
-                                            }
+
+                                characterViewModel.readAllData.observe(this) {
+                                    if (characterViewModel.readAllData.value?.isEmpty() == true)
+                                        characterViewModel.getCharacterList()
+                                    else {
+                                        characterViewModel.getRoomData()
+                                        if (!characterViewModel.observeNetworkCall.value!!) {
+                                            characterViewModel.getCharacterList()
+                                            characterViewModel.observeNetworkCall.value = true
                                         }
                                     }
-                                )
-                                CharacterList(characterViewModel.characterListResponse)
+                                }
+
+                                characterViewModel.bookmarkAllData.observe(this) {
+                                    characterViewModel.getBookmarkedRoomData()
+                                }
+
+                                CharacterList(characterViewModel.characterListResponse,
+                                    characterViewModel,
+                                    characterViewModel.bookmarkListResponse)
                             }
                         }
                     }
@@ -101,48 +99,29 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @Composable
-    fun TopBar() {
-        TopAppBar(
-            title = { Text(text = stringResource(R.string.app_name), fontSize = 18.sp) },
-            backgroundColor = colorResource(id = R.color.black),
-            contentColor = Color.White
-        )
-    }
 
     @Composable
-    fun CharacterList(characterList: CharacterData) {
-
-        val characters = characterList.data?.results
-
+    fun CharacterList(
+        characterList: CharacterData,
+        viewModel: CharacterViewModel,
+        bookmarkAllData: BookmarkData
+    ) {
         LazyColumn {
 
-            characterList.data?.let {
-                itemsIndexed(items = it.results) { index, item ->
-                    CharacterItem(character = item, index, context = LocalContext.current)
-                }
+                characterList.data?.let { it ->
+                    itemsIndexed(items = it.results) { index, item ->
+
+                        var bookmarked = false
+                        bookmarkAllData.bookmarks!!.forEach {
+                            if(it.id == item.id)
+                                bookmarked = true
+                        }
+                        CharacterItem(character = item,  context = LocalContext.current,viewModel,bookmarked)
+                    }
             }
+
+
         }
-    }
-}
-
-@Composable
-fun SwipeRefreshCompose() {
-
-    var refreshing by remember { mutableStateOf(false) }
-    LaunchedEffect(refreshing) {
-        if (refreshing) {
-            delay(3000)
-            refreshing = false
-        }
-    }
-
-    SwipeRefresh(
-        state = rememberSwipeRefreshState(isRefreshing = refreshing),
-        onRefresh = { refreshing = true },
-    ) {
-
-
     }
 }
 

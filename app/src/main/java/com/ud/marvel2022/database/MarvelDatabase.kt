@@ -4,12 +4,18 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.ud.marvel2022.model.CharacterInfoTable
+import com.ud.marvel2022.model.roomTable.BookmarksTable
+import com.ud.marvel2022.model.roomTable.CharacterInfoTable
 
 
-@Database(entities = [CharacterInfoTable::class], version = 1, exportSchema = false)
+@Database(
+    entities = [CharacterInfoTable::class, BookmarksTable::class],
+    version = 2,
+    exportSchema = false
+)
 abstract class MarvelDatabase : RoomDatabase() {
     abstract fun characterDao(): CharacterInfoDAO
+    abstract fun bookmarkDao(): BookmarkDAO
 
     companion object {
         private var INSTANCE: MarvelDatabase? = null
@@ -21,7 +27,8 @@ abstract class MarvelDatabase : RoomDatabase() {
                         context.applicationContext,
                         MarvelDatabase::class.java,
                         "marvel_database"
-                    ).build()
+                    ).fallbackToDestructiveMigration()
+                        .build()
                     INSTANCE = instance
                 }
                 return instance

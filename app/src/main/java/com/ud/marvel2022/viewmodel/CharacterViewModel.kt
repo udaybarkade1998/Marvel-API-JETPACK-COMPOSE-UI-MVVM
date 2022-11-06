@@ -1,7 +1,7 @@
 package com.ud.marvel2022.viewmodel
 
 import android.content.Context
-import android.util.Log
+
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,11 +9,15 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ud.marvel2022.database.BookmarkDAO
+import com.ud.marvel2022.database.CharacterInfoDAO
 import com.ud.marvel2022.database.MarvelDatabase
-import com.ud.marvel2022.model.CharacterInfoTable
+import com.ud.marvel2022.model.BookmarkData
 import com.ud.marvel2022.model.character.*
-import com.ud.marvel2022.repository.MarvelRepository
+import com.ud.marvel2022.model.roomTable.BookmarksTable
+import com.ud.marvel2022.model.roomTable.CharacterInfoTable
 import com.ud.marvel2022.network.MarvelAPI
+import com.ud.marvel2022.repository.MarvelRepository
 import kotlinx.coroutines.launch
 
 class CharacterViewModel : ViewModel() {
@@ -31,14 +35,23 @@ class CharacterViewModel : ViewModel() {
             ""
         )
     )
+
+    var bookmarkListResponse: BookmarkData by mutableStateOf(
+        BookmarkData(null)
+    )
+
+
     var errorMessage: String by mutableStateOf("")
 
     lateinit var readAllData: LiveData<List<CharacterInfoTable>>
+    lateinit var bookmarkAllData: LiveData<List<BookmarksTable>>
+
     lateinit var repository: MarvelRepository
+    private lateinit var bookmars: BookmarkDAO
+    private lateinit var characters: CharacterInfoDAO
 
     init {
         observeNetworkCall.value = false
-        Log.e("BOOLEAN", "" + observeNetworkCall.value)
     }
 
     private fun insertIntoDatabase(character: CharacterInfoTable) {
@@ -48,12 +61,23 @@ class CharacterViewModel : ViewModel() {
     }
 
     fun setInit(context: Context) {
-        val characters = MarvelDatabase.getInstance(context).characterDao()
-        Log.e("ELEMENT", "characters")
-        repository = MarvelRepository(characters)
-        Log.e("ELEMENT", "repo")
-        readAllData = repository.readAllData
+        characters = MarvelDatabase.getInstance(context).characterDao()
+        bookmars = MarvelDatabase.getInstance(context).bookmarkDao()
 
+        repository = MarvelRepository(characters, bookmars)
+
+        readAllData = repository.readAllData
+        bookmarkAllData = repository.bookmarkList
+
+
+    }
+
+    fun addBookmark(id: Int) {
+        viewModelScope.launch { repository.addBookmark(BookmarksTable(id)) }
+    }
+
+    fun removeBookmark(id: Int) {
+        viewModelScope.launch { repository.removeBookmark(BookmarksTable(id)) }
     }
 
 
@@ -64,7 +88,7 @@ class CharacterViewModel : ViewModel() {
             try {
                 val characterList = marvelAPI.getCharacters(100, null, ts = "tsor")
 
-               // val characterList = marvelAPI.getCharactersByName("hulk", 1, null, ts = "tsor")
+                // val characterList = marvelAPI.getCharactersByName("hulk", 1, null, ts = "tsor")
                 characterListResponse = characterList
                 characterList.data!!.results.forEach { it ->
 
@@ -83,7 +107,6 @@ class CharacterViewModel : ViewModel() {
                         comics = comics
                     )
                     insertIntoDatabase(characterRoomInfo)
-                    Log.e("Count", "abed")
                 }
             } catch (e: java.lang.Exception) {
                 errorMessage = e.message.toString()
@@ -94,24 +117,19 @@ class CharacterViewModel : ViewModel() {
     fun getRoomData() {
 
         viewModelScope.launch {
-            readAllData = repository.readAllData
-
-            lateinit var tmpcharResp: CharacterData
-
-            lateinit var tmpData: Data
 
             val apiResult = mutableListOf<ApiResult>()
-
+            lateinit var tmpcharResp: CharacterData
+            lateinit var tmpData: Data
             lateinit var comicItemList: MutableList<Item>
 
             if (readAllData.value != null) {
                 readAllData.value!!.forEach {
 
-                    Log.e("PATH", it.thumbnail.split("$$")[0] + "." + it.thumbnail.split("$$")[1])
 
                     comicItemList = mutableListOf()
 
-                    var comicsList = it.comics.split("$$").forEach {
+                    it.comics.split("$$").forEach {
                         comicItemList.add(Item(name = it, ""))
                     }
                     comicItemList.removeLast()
@@ -136,8 +154,33 @@ class CharacterViewModel : ViewModel() {
 
                 characterListResponse = tmpcharResp
             }
+
+
         }
 
+    }
+
+    fun getBookmarkedRoomData() {
+        viewModelScope.launch {
+
+            bookmarkAllData = repository.bookmarkList
+            if (bookmarkAllData.value != null) {
+
+
+                lateinit var tmpBookmark: BookmarkData
+                val tmpBookTable = mutableListOf<BookmarksTable>()
+
+                bookmarkAllData.value!!.forEach {
+                    tmpBookTable.add(BookmarksTable(it.id))
+
+                }
+                tmpBookmark = BookmarkData(tmpBookTable)
+                bookmarkListResponse = tmpBookmark
+
+
+            }
+
+        }
     }
 }
 

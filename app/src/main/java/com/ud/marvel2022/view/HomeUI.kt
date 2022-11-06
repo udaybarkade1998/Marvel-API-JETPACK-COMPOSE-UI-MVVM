@@ -2,17 +2,19 @@ package com.ud.marvel2022.view
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
-import androidx.compose.material.Shapes
+import androidx.compose.material.Icon
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -26,10 +28,16 @@ import coil.compose.rememberImagePainter
 import coil.size.Scale
 import com.ud.marvel2022.CharacterInformation
 import com.ud.marvel2022.model.character.ApiResult
+import com.ud.marvel2022.viewmodel.CharacterViewModel
 
 
 @Composable
-fun CharacterItem(character: ApiResult, index: Int, context: Context) {
+fun CharacterItem(
+    character: ApiResult,
+    context: Context,
+    viewModel: CharacterViewModel,
+    bookmarked: Boolean = false
+) {
     Card(
         modifier = Modifier
             .padding(8.dp, 10.dp)
@@ -54,7 +62,7 @@ fun CharacterItem(character: ApiResult, index: Int, context: Context) {
 
                     //Marvel character image
                     val imageUrl = character.thumbnail.path + "." + character.thumbnail.extension
-                    Log.e("PathIN IMAGE", imageUrl)
+
                     Image(
                         contentDescription = character.description,
                         contentScale = ContentScale.FillWidth,
@@ -76,6 +84,7 @@ fun CharacterItem(character: ApiResult, index: Int, context: Context) {
                         // Creating a Vertical Gradient Color
                         val gradientGrayWhite = Brush.verticalGradient(0f to Color.Transparent, 1500f to Color.Black)
 
+
                         //Marvel character name
                         Text(
                             text = character.name,
@@ -85,9 +94,24 @@ fun CharacterItem(character: ApiResult, index: Int, context: Context) {
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier
                                 .background(gradientGrayWhite)
-                                .padding(0.dp,10.dp)
+                                .padding(0.dp, 10.dp)
                                 .fillMaxWidth()
                         )
+
+
+                        var iconTintColor: Boolean by remember { mutableStateOf(bookmarked) }
+
+                        Icon(Icons.Filled.Bookmark,
+                            "Bookmark",
+                            tint = if (iconTintColor) Color.Yellow else Color.White,
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .clickable {
+
+                                    if (iconTintColor) viewModel.removeBookmark(character.id) else viewModel.addBookmark(character.id)
+                                    iconTintColor = !iconTintColor
+
+                                })
                     }
                 }
 

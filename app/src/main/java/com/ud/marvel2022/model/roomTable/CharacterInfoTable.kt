@@ -1,11 +1,9 @@
-package com.ud.marvel2022.model
+package com.ud.marvel2022.model.roomTable
 
 import android.os.Parcelable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.ud.marvel2022.model.character.Comics
-import com.ud.marvel2022.model.character.Thumbnail
 import kotlinx.android.parcel.Parcelize
 
 

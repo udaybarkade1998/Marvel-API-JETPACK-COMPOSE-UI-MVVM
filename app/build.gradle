@@ -9,12 +9,12 @@ apply plugin: 'kotlin-kapt'
 
 android {
     namespace 'com.ud.marvel2022'
-    compileSdk 32
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.ud.marvel2022"
         minSdk 21
-        targetSdk 32
+        targetSdk 33
         versionCode 1
         versionName "1.0"
 
@@ -68,6 +68,12 @@ dependencies {
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_ui_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_ui_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_ui_version"
+
+    //material icons
+    implementation "androidx.compose.material:material-icons-extended:$compose_ui_version"
+
+    //coroutine
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.0.1'
 
     //Retrofit
     implementation "com.squareup.retrofit2:retrofit:$retrofit_version"

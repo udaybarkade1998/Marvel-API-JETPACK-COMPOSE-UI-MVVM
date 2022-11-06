@@ -1,6 +1,5 @@
 package com.ud.marvel2022.view
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -62,7 +61,6 @@ fun GetCharacterImageData(character: ApiResult) {
         Box(modifier = Modifier.fillMaxSize()) {
             //Marvel character image
             val imageUrl = character.thumbnail.path + "." + character.thumbnail.extension
-            Log.e("Path", imageUrl)
             Image(
                 contentDescription = character.description,
                 contentScale = ContentScale.FillWidth,
