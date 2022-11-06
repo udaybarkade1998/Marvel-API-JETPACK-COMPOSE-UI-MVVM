@@ -14,6 +14,7 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Radar
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,7 +73,7 @@ fun CharacterItem(
                         painter = rememberImagePainter(data = imageUrl,
                             builder = {
                                 scale(Scale.FIT)
-                                placeholder(com.ud.marvel2022.R.drawable.ic_launcher_background)
+                                placeholder(com.ud.marvel2022.R.drawable.logo)
                             })
                     )
 

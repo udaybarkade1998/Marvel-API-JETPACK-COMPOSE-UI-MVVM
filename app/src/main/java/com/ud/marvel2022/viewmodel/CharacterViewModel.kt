@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 class CharacterViewModel : ViewModel() {
 
     var observeNetworkCall: MutableLiveData<Boolean> = MutableLiveData()
+    var searchState : Boolean by mutableStateOf(false)
 
     var characterListResponse: CharacterData by mutableStateOf(
         CharacterData(
@@ -54,23 +55,20 @@ class CharacterViewModel : ViewModel() {
         observeNetworkCall.value = false
     }
 
+    fun setInit(context: Context) {
+        characters = MarvelDatabase.getInstance(context).characterDao()
+        bookmars = MarvelDatabase.getInstance(context).bookmarkDao()
+        repository = MarvelRepository(characters, bookmars)
+        readAllData = repository.readAllData
+        bookmarkAllData = repository.bookmarkList
+    }
+
     private fun insertIntoDatabase(character: CharacterInfoTable) {
         viewModelScope.launch {
             repository.addData(character)
         }
     }
 
-    fun setInit(context: Context) {
-        characters = MarvelDatabase.getInstance(context).characterDao()
-        bookmars = MarvelDatabase.getInstance(context).bookmarkDao()
-
-        repository = MarvelRepository(characters, bookmars)
-
-        readAllData = repository.readAllData
-        bookmarkAllData = repository.bookmarkList
-
-
-    }
 
     fun addBookmark(id: Int) {
         viewModelScope.launch { repository.addBookmark(BookmarksTable(id)) }
@@ -84,33 +82,35 @@ class CharacterViewModel : ViewModel() {
     fun getCharacterList() {
         viewModelScope.launch {
             val marvelAPI = MarvelAPI.getInstance()
-
             try {
                 val characterList = marvelAPI.getCharacters(100, null, ts = "tsor")
+                processCharacterDataFromAPItoDatabase(characterList)
 
-                // val characterList = marvelAPI.getCharactersByName("hulk", 1, null, ts = "tsor")
-                characterListResponse = characterList
-                characterList.data!!.results.forEach { it ->
-
-                    val thumbnail = it.thumbnail.path + "$$" + it.thumbnail.extension
-                    var comics = ""
-
-                    it.comics!!.items.forEach { item ->
-                        comics += "${item.name}$$"
-                    }
-
-                    val characterRoomInfo = CharacterInfoTable(
-                        name = it.name,
-                        description = it.description,
-                        id = it.id,
-                        thumbnail = thumbnail,
-                        comics = comics
-                    )
-                    insertIntoDatabase(characterRoomInfo)
-                }
             } catch (e: java.lang.Exception) {
                 errorMessage = e.message.toString()
             }
+        }
+    }
+
+    private fun processCharacterDataFromAPItoDatabase(characterList: CharacterData) {
+        characterListResponse = characterList
+        characterList.data!!.results.forEach { it ->
+
+            val thumbnail = it.thumbnail.path + "$$" + it.thumbnail.extension
+            var comics = ""
+
+            it.comics!!.items.forEach { item ->
+                comics += "${item.name}$$"
+            }
+
+            val characterRoomInfo = CharacterInfoTable(
+                name = it.name,
+                description = it.description,
+                id = it.id,
+                thumbnail = thumbnail,
+                comics = comics
+            )
+            insertIntoDatabase(characterRoomInfo)
         }
     }
 
@@ -176,10 +176,21 @@ class CharacterViewModel : ViewModel() {
                 }
                 tmpBookmark = BookmarkData(tmpBookTable)
                 bookmarkListResponse = tmpBookmark
-
-
             }
 
+        }
+    }
+
+    fun getSearchedCharacters(query: String) {
+        viewModelScope.launch {
+            val marvelAPI = MarvelAPI.getInstance()
+            try {
+                val characterList = marvelAPI.getCharactersByName(query, 100, null, ts = "tsor")
+                processCharacterDataFromAPItoDatabase(characterList)
+
+            } catch (e: java.lang.Exception) {
+                errorMessage = e.message.toString()
+            }
         }
     }
 }
