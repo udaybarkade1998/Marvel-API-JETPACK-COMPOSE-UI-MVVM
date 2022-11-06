@@ -14,14 +14,13 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
+import androidx.compose.material.ExposedDropdownMenuDefaults.textFieldColors
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -56,7 +55,10 @@ class MainActivity : ComponentActivity() {
                         Image(
                             painterResource(R.drawable.logo),
                             contentDescription = "",
-                            modifier = Modifier.padding(10.dp).width(100.dp).height(50.dp)
+                            modifier = Modifier
+                                .padding(10.dp)
+                                .width(100.dp)
+                                .height(50.dp)
                         )
                         SearchView(characterViewModel)
                     }
@@ -164,9 +166,8 @@ fun SearchView(viewModel: CharacterViewModel) {
         onValueChange = { onQueryChanged ->
             query = onQueryChanged
             if (onQueryChanged.isNotEmpty()) {
-                viewModel.getSearchedCharacters(query)
+                viewModel.getSearchedCharacters(query.trim())
                 viewModel.searchState = true
-                Log.e("Data", query)
             }
         },
         leadingIcon = {
@@ -177,7 +178,7 @@ fun SearchView(viewModel: CharacterViewModel) {
             )
         },
         maxLines = 1,
-        colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent),
+        colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent, focusedIndicatorColor = Color.Transparent),
         placeholder = { Text(text = stringResource(R.string.hint_search_query)) },
         textStyle = MaterialTheme.typography.subtitle1,
         singleLine = true,
@@ -186,6 +187,7 @@ fun SearchView(viewModel: CharacterViewModel) {
             .padding(10.dp)
             .background(color = MaterialTheme.colors.background, shape = RoundedCornerShape(20))
             .height(50.dp)
+            ,
     )
 
 }
