@@ -19,6 +19,7 @@ import com.ud.marvel2022.model.roomTable.CharacterInfoTable
 import com.ud.marvel2022.network.MarvelAPI
 import com.ud.marvel2022.repository.MarvelRepository
 import kotlinx.coroutines.launch
+import java.sql.Date
 
 class CharacterViewModel : ViewModel() {
 
@@ -200,7 +201,8 @@ class CharacterViewModel : ViewModel() {
         viewModelScope.launch {
             val marvelAPI = MarvelAPI.getInstance()
             try {
-                val characterList = marvelAPI.getCharactersByName(query, 100, null, ts = "tsor")
+
+                val characterList = marvelAPI.getCharactersByName(query, 100, null, ts = "${System.currentTimeMillis()/1000}")
                 processCharacterDataFromAPItoDatabase(characterList)
             } catch (e: java.lang.Exception) {
                 errorMessage = e.message.toString()
