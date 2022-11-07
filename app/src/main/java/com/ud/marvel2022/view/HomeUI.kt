@@ -14,7 +14,6 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.Radar
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +30,7 @@ import com.ud.marvel2022.CharacterInformation
 import com.ud.marvel2022.model.character.ApiResult
 import com.ud.marvel2022.viewmodel.CharacterViewModel
 
+//function return single character in list
 
 @Composable
 fun CharacterItem(
@@ -60,8 +60,7 @@ fun CharacterItem(
 
                 Box(modifier = Modifier.fillMaxSize()) {
 
-
-                    //Marvel character image
+                    //Marvel character image conversion
                     val imageUrl = character.thumbnail.path + "." + character.thumbnail.extension
 
                     Image(
@@ -85,7 +84,6 @@ fun CharacterItem(
                         // Creating a Vertical Gradient Color
                         val gradientGrayWhite = Brush.verticalGradient(0f to Color.Transparent, 1500f to Color.Black)
 
-
                         //Marvel character name
                         Text(
                             text = character.name,
@@ -99,9 +97,9 @@ fun CharacterItem(
                                 .fillMaxWidth()
                         )
 
-
                         var iconTintColor: Boolean by remember { mutableStateOf(bookmarked) }
 
+                        //Icon used to show bookmark status
                         Icon(Icons.Filled.Bookmark,
                             "Bookmark",
                             tint = if (iconTintColor) Color.Yellow else Color.White,

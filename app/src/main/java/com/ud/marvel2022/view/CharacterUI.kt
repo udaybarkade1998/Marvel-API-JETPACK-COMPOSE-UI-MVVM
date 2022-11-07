@@ -30,6 +30,7 @@ import com.ud.marvel2022.model.character.ApiResult
 val gradientGrayWhite =
     Brush.verticalGradient(0f to Color.Transparent, 1500f to Color.Black)
 
+//function return character page UI i.e image , description , comics
 @Composable
 fun CharacterUI(character: ApiResult?) {
     Surface(color = Color.Black) {
@@ -47,6 +48,7 @@ fun CharacterUI(character: ApiResult?) {
         }
     }
 }
+
 
 @Composable
 fun GetCharacterImageData(character: ApiResult) {

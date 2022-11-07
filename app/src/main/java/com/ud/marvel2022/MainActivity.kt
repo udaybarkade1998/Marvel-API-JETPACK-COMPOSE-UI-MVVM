@@ -2,7 +2,6 @@ package com.ud.marvel2022
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -14,7 +13,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
-import androidx.compose.material.ExposedDropdownMenuDefaults.textFieldColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.runtime.*
@@ -25,11 +23,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import com.ud.marvel2022.model.BookmarkData
+import com.ud.marvel2022.model.roomTable.BookmarkData
 import com.ud.marvel2022.model.character.CharacterData
 import com.ud.marvel2022.ui.theme.Marvel2022Theme
 import com.ud.marvel2022.view.CharacterItem
@@ -41,89 +38,97 @@ class MainActivity : ComponentActivity() {
 
     private val characterViewModel by viewModels<CharacterViewModel>()
 
-    @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val scaffoldState = rememberScaffoldState(rememberDrawerState(DrawerValue.Open))
-            Scaffold(
-                backgroundColor = Color.Black,
-                scaffoldState = scaffoldState,
-                topBar = {
-
-                    Row {
-                        Image(
-                            painterResource(R.drawable.logo),
-                            contentDescription = "",
-                            modifier = Modifier
-                                .padding(10.dp)
-                                .width(100.dp)
-                                .height(50.dp)
-                        )
-                        SearchView(characterViewModel)
-                    }
-                },
-
-                content = {
-                    var refreshing by remember { mutableStateOf(false) }
-                    LaunchedEffect(refreshing) {
-                        if (refreshing) {
-                            characterViewModel.getCharacterList()
-                            delay(1000)
-                            refreshing = false
-                        }
-                    }
-
-                    SwipeRefresh(
-                        state = rememberSwipeRefreshState(isRefreshing = refreshing),
-                        onRefresh = {
-                            refreshing = true
-                        },
-                    ) {
-                        Marvel2022Theme {
-
-                            Surface(
-                                modifier = Modifier.fillMaxSize(),
-                                color = Color.Black
-                            ) {
-
-                                characterViewModel.setInit(LocalContext.current.applicationContext)
-
-
-                                characterViewModel.readAllData.observe(this) {
-                                    if (characterViewModel.readAllData.value?.isEmpty() == true)
-                                        characterViewModel.getCharacterList()
-                                    else {
-                                        if (characterViewModel.searchState)
-                                            characterViewModel.searchState = true
-                                        else
-                                            characterViewModel.getRoomData()
-
-                                        if (!characterViewModel.observeNetworkCall.value!!) {
-                                            characterViewModel.getCharacterList()
-                                            characterViewModel.observeNetworkCall.value = true
-                                        }
-                                    }
-                                }
-
-                                characterViewModel.bookmarkAllData.observe(this) {
-                                    characterViewModel.getBookmarkedRoomData()
-                                }
-
-                                CharacterList(
-                                    characterViewModel.characterListResponse,
-                                    characterViewModel,
-                                    characterViewModel.bookmarkListResponse
-                                )
-                            }
-                        }
-                    }
-                }
-            )
+            App()
         }
     }
 
+    @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
+    @Composable
+    fun App(){
+        val scaffoldState = rememberScaffoldState(rememberDrawerState(DrawerValue.Open))
+        Scaffold(
+            backgroundColor = Color.Black,
+            scaffoldState = scaffoldState,
+            topBar = {
 
+                Row {
+                    Image(
+                        painterResource(R.drawable.logo),
+                        contentDescription = "",
+                        modifier = Modifier
+                            .padding(10.dp)
+                            .width(100.dp)
+                            .height(50.dp)
+                    )
+                    SearchView(characterViewModel)
+                }
+            },
+
+            content = {
+                var refreshing by remember { mutableStateOf(false) }
+                LaunchedEffect(refreshing) {
+                    if (refreshing) {
+                        characterViewModel.getCharacterListFromAPI()
+                        delay(1000)
+                        refreshing = false
+                    }
+                }
+
+                SwipeRefresh(
+                    state = rememberSwipeRefreshState(isRefreshing = refreshing),
+                    onRefresh = {
+                        refreshing = true
+                    },
+                ) {
+                    Marvel2022Theme {
+
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = Color.Black
+                        ) {
+
+                            characterViewModel.initData(LocalContext.current.applicationContext)
+
+
+                            //observing character data changes to update state
+                            characterViewModel.readAllData.observe(this) {
+                                if (characterViewModel.readAllData.value?.isEmpty() == true)
+                                    characterViewModel.getCharacterListFromAPI()
+                                else {
+                                    if (characterViewModel.searchState)
+                                        characterViewModel.searchState = true
+                                    else
+                                        characterViewModel.getLocalDatabaseData()
+
+                                    if (!characterViewModel.observeNetworkCall.value!!) {
+                                        characterViewModel.getCharacterListFromAPI()
+                                        characterViewModel.observeNetworkCall.value = true
+                                    }
+                                }
+                            }
+
+                            //observing bookmark data changes to update state
+                            characterViewModel.bookmarkAllData.observe(this) {
+                                characterViewModel.getBookmarkedRoomData()
+                            }
+
+                            //call to show Character List
+                            CharacterList(
+                                characterViewModel.characterListResponse,
+                                characterViewModel,
+                                characterViewModel.bookmarkListResponse
+                            )
+                        }
+                    }
+                }
+            })
+    }
+
+
+    //function display list of characters
     @Composable
     fun CharacterList(
         characterList: CharacterData,
@@ -148,8 +153,6 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
-
-
         }
     }
 }
@@ -158,8 +161,6 @@ class MainActivity : ComponentActivity() {
 fun SearchView(viewModel: CharacterViewModel) {
 
     var query: String by rememberSaveable { mutableStateOf("") }
-    val showClearIcon by rememberSaveable { mutableStateOf(false) }
-
 
     TextField(
         value = query,
@@ -190,17 +191,4 @@ fun SearchView(viewModel: CharacterViewModel) {
             ,
     )
 
-}
-
-@Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    Marvel2022Theme {
-        Greeting(name = "Uday")
-    }
 }

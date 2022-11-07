@@ -12,7 +12,7 @@ import androidx.lifecycle.viewModelScope
 import com.ud.marvel2022.database.BookmarkDAO
 import com.ud.marvel2022.database.CharacterInfoDAO
 import com.ud.marvel2022.database.MarvelDatabase
-import com.ud.marvel2022.model.BookmarkData
+import com.ud.marvel2022.model.roomTable.BookmarkData
 import com.ud.marvel2022.model.character.*
 import com.ud.marvel2022.model.roomTable.BookmarksTable
 import com.ud.marvel2022.model.roomTable.CharacterInfoTable
@@ -22,9 +22,13 @@ import kotlinx.coroutines.launch
 
 class CharacterViewModel : ViewModel() {
 
+    //state for network call status
     var observeNetworkCall: MutableLiveData<Boolean> = MutableLiveData()
+
+    //state for search call status
     var searchState : Boolean by mutableStateOf(false)
 
+    //state for character list fetch from database
     var characterListResponse: CharacterData by mutableStateOf(
         CharacterData(
             "",
@@ -37,61 +41,73 @@ class CharacterViewModel : ViewModel() {
         )
     )
 
+    //state for bookmark list fetch from database
     var bookmarkListResponse: BookmarkData by mutableStateOf(
         BookmarkData(null)
     )
 
-
-    var errorMessage: String by mutableStateOf("")
-
+    //Room database variables
+    //Character list
     lateinit var readAllData: LiveData<List<CharacterInfoTable>>
+
+    //Bookmark list
     lateinit var bookmarkAllData: LiveData<List<BookmarksTable>>
 
+    //repository to access all database functionality
     lateinit var repository: MarvelRepository
-    private lateinit var bookmars: BookmarkDAO
-    private lateinit var characters: CharacterInfoDAO
+
+    //DAO for bookmarks
+    private lateinit var bookmarkDAO: BookmarkDAO
+
+    //DAO for characters
+    private lateinit var characterDAO: CharacterInfoDAO
+
+    var errorMessage: String by mutableStateOf("")
 
     init {
         observeNetworkCall.value = false
     }
 
-    fun setInit(context: Context) {
-        characters = MarvelDatabase.getInstance(context).characterDao()
-        bookmars = MarvelDatabase.getInstance(context).bookmarkDao()
-        repository = MarvelRepository(characters, bookmars)
+    //initialize all data using context from activity
+    fun initData(context: Context) {
+        characterDAO = MarvelDatabase.getInstance(context).characterDao()
+        bookmarkDAO = MarvelDatabase.getInstance(context).bookmarkDao()
+        repository = MarvelRepository(characterDAO, bookmarkDAO)
         readAllData = repository.readAllData
         bookmarkAllData = repository.bookmarkList
     }
 
-    private fun insertIntoDatabase(character: CharacterInfoTable) {
+    //insert character to database
+    private fun insertCharacterIntoDatabase(character: CharacterInfoTable) {
         viewModelScope.launch {
             repository.addData(character)
         }
     }
-
-
+    
+    //add bookmarks to database
     fun addBookmark(id: Int) {
         viewModelScope.launch { repository.addBookmark(BookmarksTable(id)) }
     }
 
+    //remove bookmark from database
     fun removeBookmark(id: Int) {
         viewModelScope.launch { repository.removeBookmark(BookmarksTable(id)) }
     }
-
-
-    fun getCharacterList() {
+    
+    //fetch character list from API
+    fun getCharacterListFromAPI() {
         viewModelScope.launch {
             val marvelAPI = MarvelAPI.getInstance()
             try {
                 val characterList = marvelAPI.getCharacters(100, null, ts = "tsor")
                 processCharacterDataFromAPItoDatabase(characterList)
-
             } catch (e: java.lang.Exception) {
                 errorMessage = e.message.toString()
             }
         }
     }
 
+    //function to store API Data to database
     private fun processCharacterDataFromAPItoDatabase(characterList: CharacterData) {
         characterListResponse = characterList
         characterList.data!!.results.forEach { it ->
@@ -110,12 +126,12 @@ class CharacterViewModel : ViewModel() {
                 thumbnail = thumbnail,
                 comics = comics
             )
-            insertIntoDatabase(characterRoomInfo)
+            insertCharacterIntoDatabase(characterRoomInfo)
         }
     }
 
-    fun getRoomData() {
-
+    //get data from database and save to Live state
+    fun getLocalDatabaseData() {
         viewModelScope.launch {
 
             val apiResult = mutableListOf<ApiResult>()
@@ -133,7 +149,6 @@ class CharacterViewModel : ViewModel() {
                         comicItemList.add(Item(name = it, ""))
                     }
                     comicItemList.removeLast()
-
 
                     apiResult.add(
                         ApiResult(
@@ -160,19 +175,18 @@ class CharacterViewModel : ViewModel() {
 
     }
 
+    //get bookmark list and save to state
     fun getBookmarkedRoomData() {
         viewModelScope.launch {
 
             bookmarkAllData = repository.bookmarkList
             if (bookmarkAllData.value != null) {
 
-
                 lateinit var tmpBookmark: BookmarkData
                 val tmpBookTable = mutableListOf<BookmarksTable>()
 
                 bookmarkAllData.value!!.forEach {
                     tmpBookTable.add(BookmarksTable(it.id))
-
                 }
                 tmpBookmark = BookmarkData(tmpBookTable)
                 bookmarkListResponse = tmpBookmark
@@ -181,13 +195,13 @@ class CharacterViewModel : ViewModel() {
         }
     }
 
+    //search feature applied on LIVE API i.e nameStartWith
     fun getSearchedCharacters(query: String) {
         viewModelScope.launch {
             val marvelAPI = MarvelAPI.getInstance()
             try {
                 val characterList = marvelAPI.getCharactersByName(query, 100, null, ts = "tsor")
                 processCharacterDataFromAPItoDatabase(characterList)
-
             } catch (e: java.lang.Exception) {
                 errorMessage = e.message.toString()
             }

@@ -51,6 +51,7 @@ interface MarvelAPI {
     }
 }
 
+//md5 global logic used to convert url data to hash
 fun md5(input: String): String {
     val md = MessageDigest.getInstance("MD5")
     return BigInteger(1, md.digest(input.toByteArray())).toString(16).padStart(32, '0')
